@@ -1,0 +1,18 @@
+.env
+.cache
+.vscode
+.ruff_cache
+.venv
+yolo11n.pt
+# 忽略大模型权重
+*.gguf
+*.pt
+*.safetensors
+*.bin
+
+# 忽略 Python 运行缓存
+__pycache__/
+*.pyc
+
+# 忽略临时事件日志（可选，看你需不需要追踪）
+event_*.md
