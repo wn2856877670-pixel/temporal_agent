@@ -25,13 +25,7 @@ class QwenTemporalAgent:
                     {
                         "type": "video",
                         "video": video_path,
-                        # 【核心防爆点】60秒视频太长，绝对不能用 fps=1.0。
-                        # n_frames=16 表示不管视频多长，系统会均匀从中抽取 16 帧发给大模型。
-                        # 16 帧对于判断动物行为的上下文已经足够了。
-                    
-                       # "resized_height": 280, 
-                        #"resized_width": 280, 
-                        # 【核心救命参数 2】严格限制帧数：无论视频多长，只均匀截取 8 张图！
+                       
                         "fps": 1.0,
                     },
                     {

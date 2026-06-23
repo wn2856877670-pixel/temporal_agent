@@ -8,7 +8,6 @@ dependencies = [
     # 基础与工具库
     "numpy>=2.4.1",
     "opencv-python>=4.11.0.86",
-    "pydantic-ai>=1.43.0",
     "pydantic-settings>=2.12.0",
     "rich>=14.2.0",
     "typer>=0.21.1",

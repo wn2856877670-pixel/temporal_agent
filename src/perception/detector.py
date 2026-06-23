@@ -90,6 +90,7 @@ class CachedDetector:
             frame_state = FrameState(
                 frame_number=frame_num,
                 timestamp_seconds=timestamp,
+                detections=detections,
                 objects=detections,
                 image=frame  # 这一帧会被传给触发器，触发器用完就会被回收
             )

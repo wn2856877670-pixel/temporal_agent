@@ -7,9 +7,6 @@ from pydantic import Field
 class Settings(BaseSettings):
     """Application settings loaded from environment or .env file."""
     
-    # API Keys
-    openai_api_key: str = Field(default="", description="OpenAI API key")
-    
     # Model Configuration
     default_model: str = Field(
         default="gpt-4o-mini",
