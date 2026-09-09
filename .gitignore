@@ -1,18 +1,57 @@
-.env
-.cache
-.vscode
-.ruff_cache
-.venv
-yolo11n.pt
-# 忽略大模型权重
-*.gguf
-*.pt
-*.safetensors
-*.bin
-
-# 忽略 Python 运行缓存
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
 
-# 忽略临时事件日志（可选，看你需不需要追踪）
-event_*.md
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime
+logs/
+tmp/
+cache/
+
+# Detection outputs
+outputs/
+runs/
+uploads/
+
+# Videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Models
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# Database runtime files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+# Local editing / temporary files
+.cloud_edit/
+
+# Patch archives
+*_patch.tar.gz
+
+# Temporary binary files
+*.bin
+
+configs/config.json

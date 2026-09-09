@@ -1,52 +1,11 @@
 [project]
-name = "temporal-agent"
-version = "0.1.0"
-description = "Event-driven Wildlife Video Understanding Agent"
-readme = "README.md"
-requires-python = ">=3.11"
-dependencies = [
-    # 基础与工具库
-    "numpy>=2.4.1",
-    "opencv-python>=4.11.0.86",
-    "pydantic-settings>=2.12.0",
-    "rich>=14.2.0",
-    "typer>=0.21.1",
-    # 视觉感知 (YOLO)
-    "ultralytics>=8.4.3",
-    # 深度学习底座 (PyTorch)
-    "torch",
-    "torchvision",
-    "torchaudio",
-    # 大模型与多模态核心 (严格限定安全版本，彻底根除幽灵报错)
-    "transformers>=4.45.0",
-    "huggingface-hub>=0.25.0",
-    "accelerate>=0.34.0",
-    "qwen-vl-utils>=0.0.8",
-    "streamlit>=1.58.0",
-]
+name = "deer-behavior-clean"
+version = "1.0.0"
+description = "Clean deer abnormal behavior detection system"
+requires-python = ">=3.10,<3.12"
 
-[dependency-groups]
-dev = [
-    "ruff>=0.14.13",
-]
+[tool.setuptools]
+package-dir = {"" = "src"}
 
-# ==========================================
-# 下面是 uv 的专属魔法配置区
-# ==========================================
-
-# 1. 强制使用清华源作为默认下载源（彻底告别 operation timed out 网络超时）
-[[tool.uv.index]]
-name = "tuna"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = true
-
-# 2. 强制指定 PyTorch CUDA 12.4 下载源（防止下载成 CPU 阉割版）
-[[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
-explicit = true
-
-[tool.uv.sources]
-torch = { index = "pytorch-cu124" }
-torchvision = { index = "pytorch-cu124" }
-torchaudio = { index = "pytorch-cu124" }
+[tool.setuptools.packages.find]
+where = ["src"]
