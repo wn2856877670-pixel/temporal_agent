@@ -8,6 +8,7 @@ export interface Task {
   event_count?: number; frame?: number; total_frames?: number; eta_seconds?: number | null;
   queue_position?: number | null; processed_video_url?: string; output_url?: string;
   error?: string; result?: QwenResult; events: TaskEvent[];
+  stage?: string;
 }
 export interface HistoryTask {
   task_id: string; filename: string; status: string; created_at: string;
@@ -18,6 +19,22 @@ export interface BehaviorEvent {
   start_time?: number; end_time?: number; duration?: number;
   confidence?: number | null; qwen_result?: string; qwen_confidence?: number | null;
   clip_url?: string; created_at: string;
+  evidence?: string;
+}
+
+export type TaskStatus = 'QUEUED' | 'RUNNING' | 'REVIEWING' | 'COMPLETED' | 'FAILED';
+export interface BusinessTask {
+  taskId: string; fileName: string; status: TaskStatus; eventCount: number;
+  createdAt: string; finishedAt?: string; errorMessage?: string; outputUrl?: string; resultJson?: string;
+}
+export interface BusinessProgress {
+  status: TaskStatus; progress: number | string; stage: string;
+  processedFrames: number | string; totalFrames: number | string; updatedAt?: string;
+}
+export interface BusinessEvent {
+  id: number; eventId: string; taskId: string; eventIndex: number; eventType: string;
+  startTime: number; endTime: number; duration: number; confidence?: number | null;
+  qwenResult: string; qwenConfidence?: number | null; clipUrl?: string; createdAt: string; evidence?: string;
 }
 export interface Statistics {
   total_tasks: number; total_events: number; total_abnormal: number;

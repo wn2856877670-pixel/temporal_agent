@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export function useResource<T>(load: (signal: AbortSignal) => Promise<T>, interval = 0) {
+export function useResource<T>(load: (signal: AbortSignal) => Promise<T>, interval = 0, stop?: (value: T) => boolean) {
   const [data, setData] = useState<T>();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -11,20 +11,22 @@ export function useResource<T>(load: (signal: AbortSignal) => Promise<T>, interv
     let timer: ReturnType<typeof setTimeout>;
     setLoading(true);
     const run = async () => {
+      let finished = false;
       try {
         const value = await load(controller.signal);
+        finished = stop?.(value) ?? false;
         if (!controller.signal.aborted) { setData(value); setError(''); }
       } catch (e) {
         if (!controller.signal.aborted) setError(e instanceof Error ? e.message : '加载失败');
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
-          if (interval) timer = setTimeout(run, interval);
+          if (interval && !finished) timer = setTimeout(run, interval);
         }
       }
     };
     void run();
     return () => { controller.abort(); clearTimeout(timer); };
-  }, [load, interval, revision]);
+  }, [load, interval, revision, stop]);
   return { data, error, loading, refresh };
 }

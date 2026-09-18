@@ -27,12 +27,13 @@ def run_video(
     progress_callback: ProgressCallback | None = None,
     task_id: str | None = None,
     filename: str | None = None,
+    repository=None,
 ) -> dict:
     input_path = Path(input_path)
     output_path = Path(output_path)
     task_id = task_id or f"cli_{uuid4().hex[:12]}"
     filename = filename or input_path.name
-    repository = DeerRepository(settings)
+    repository = repository if repository is not None else DeerRepository(settings)
     repository.create_task(
         task_id=task_id,
         filename=filename,
@@ -192,6 +193,8 @@ def _run_video_core(
         writer.release()
         event_buffer.close()
 
+    if progress_callback:
+        progress_callback({"stage": "REVIEWING", "progress": 90, "frame": frame_number, "total_frames": total_frames})
     qwen_events = []
     for event_index, saved in enumerate(event_buffer.saved_events, start=1):
         original_event_video = Path(saved.video_path)

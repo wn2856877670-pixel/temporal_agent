@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { businessApi } from './businessApi';
 import type { Task, HistoryTask, Statistics, DailyPoint, TypePoint, EventFilters, EventPage, BehaviorEvent } from './types';
 
 export const http = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || '', timeout: 20000 });
@@ -10,7 +11,7 @@ http.interceptors.response.use(response => response, error => {
       : '服务连接失败，请检查云端服务和端口转发';
   return Promise.reject(new Error(message));
 });
-export const api = {
+const legacyApi = {
   jobs: async (signal?: AbortSignal) => (await http.get<{ jobs: Task[] }>('/api/jobs', { signal })).data.jobs,
   job: async (id: string, signal?: AbortSignal) => (await http.get<Task>(`/api/jobs/${encodeURIComponent(id)}`, { signal })).data,
   history: async (signal?: AbortSignal) => (await http.get<{ tasks: HistoryTask[] }>('/api/history/tasks', { params: { limit: 1000 }, signal })).data.tasks,
@@ -28,6 +29,7 @@ export const api = {
     })).data.job;
   },
 };
+export const api: typeof legacyApi = import.meta.env.VITE_BACKEND === 'spring' ? { ...legacyApi, ...businessApi(http) } : legacyApi;
 
 export function mediaUrl(path?: string, version?: string | number) {
   if (!path) return '';

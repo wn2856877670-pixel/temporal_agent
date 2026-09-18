@@ -1,5 +1,7 @@
 # 梅花鹿异常行为检测系统
 
+新增业务架构见 [Spring Boot + RabbitMQ + Redis + MySQL + Python Worker](docs/BUSINESS_ARCHITECTURE.md)，实际测试记录见 [验收记录](docs/BUSINESS_VERIFICATION.md)。旧 FastAPI 部署方式仍保留。
+
 这是整理后的完整可运行版本，目标是把原来混在一起的检测、触发、大模型复核和前端展示拆成清晰模块。
 
 ## 功能

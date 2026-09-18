@@ -13,6 +13,8 @@ const navigation = [
   { to: '/tasks', text: '任务记录', icon: ClipboardList },
   { to: '/events', text: '行为事件', icon: Film },
 ];
+const taskFinished = (task: Task) => ['completed', 'failed'].includes(task.state);
+const allFinished = (tasks: Task[]) => tasks.every(taskFinished);
 
 export default function App() {
   const [open, setOpen] = useState(false);
@@ -79,7 +81,8 @@ function Analyze({ upload, submit }: { upload: { busy: boolean; percent: number;
   const [params, setParams] = useSearchParams();
   const [file, setFile] = useState<File>(); const [validation, setValidation] = useState('');
   const input = useRef<HTMLInputElement>(null);
-  const resource = useResource(api.jobs, 3000);
+  const loadJobs = useCallback((s: AbortSignal) => api.jobs(s), [upload.id]);
+  const resource = useResource(loadJobs, 2000, allFinished);
   const selected = params.get('task') || upload.id || resource.data?.[0]?.job_id;
   const choose = (value?: File) => {
     setValidation('');
@@ -103,7 +106,7 @@ function Analyze({ upload, submit }: { upload: { busy: boolean; percent: number;
 function TaskDetail({ id }: { id: string }) {
   const [clipsOpen, setClipsOpen] = useState(false);
   const load = useCallback((s: AbortSignal) => api.job(id, s), [id]);
-  const { data: job, error, refresh } = useResource(load, 3000);
+  const { data: job, error, refresh } = useResource(load, 2000, taskFinished);
   if (!job) return error ? <Notice text={`${error}。历史事件仍可在行为事件页查询。`} retry={refresh}/> : <Empty text="正在读取任务…"/>;
   const completed = job.state === 'completed';
   const events = job.events || [];
@@ -124,7 +127,7 @@ function TaskDetail({ id }: { id: string }) {
   </>;
 }
 function Tasks() {
-  const { data, error, loading, refresh } = useResource(api.history, 10000);
+  const { data, error, loading, refresh } = useResource(api.history);
   const [search, setSearch] = useState(''); const [date, setDate] = useState(''); const [status, setStatus] = useState(''); const [page, setPage] = useState(1);
   const rows = (data || []).filter(t => `${t.task_id} ${t.filename}`.toLowerCase().includes(search.toLowerCase()) && (!date || t.created_at.startsWith(date)) && (!status || t.status === status));
   const actualPage = Math.min(page, Math.max(1, Math.ceil(rows.length / 10)));
@@ -161,6 +164,6 @@ function EventDetail() {
     return { event, job };
   }, [eventId]);
   const { data, error, refresh } = useResource(load);
-  const event = data?.event; const result = data?.job?.events?.[Math.max(0, (event?.event_index || 1) - 1)]?.qwen_result;
+  const event = data?.event; const result = event?.evidence ? { evidence: event.evidence } : data?.job?.events?.[Math.max(0, (event?.event_index || 1) - 1)]?.qwen_result;
   return <><PageTitle title={`事件回放${event ? ` #${event.id}` : ''}`}><Link className="secondary" to={`/events${event ? '?task_id=' + encodeURIComponent(event.task_id) : ''}`}>返回事件记录</Link></PageTitle>{error && <Notice text={error} retry={refresh}/>}{event ? <section><div className="result-grid"><Player path={event.clip_url} version={event.created_at} title="候选事件片段"/><div className="event-facts"><h2>事件详情</h2><dl><dt>关联任务</dt><dd><Link to={`/analyze?task=${encodeURIComponent(event.task_id)}`}>{event.task_id}</Link></dd><dt>记录时间</dt><dd>{event.created_at}</dd><dt>片段时间</dt><dd>{seconds(event.start_time)} – {seconds(event.end_time)}</dd><dt>行为类型</dt><dd>未分类</dd><dt>候选触发规则</dt><dd>{triggerLabel(event.event_type)}</dd><dt>检测置信度</dt><dd>{confidence(event.confidence)}</dd><dt>Qwen 结论</dt><dd><Badge value={event.qwen_result}/></dd><dt>Qwen 置信度</dt><dd>{confidence(event.qwen_confidence)}</dd></dl><h3>判断依据</h3><p>{result?.evidence || '历史接口未保存判断依据，且未取得对应任务的详细结果。'}</p></div></div></section> : !error && <Empty text="正在读取事件…"/>}</>;
 }

@@ -1,0 +1,43 @@
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:6020}
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/deer_business?createDatabaseIfNotExist=true&connectionTimeZone=Asia/Shanghai}
+    username: ${MYSQL_USER:deer}
+    password: ${MYSQL_PASSWORD}
+    hikari:
+      maximum-pool-size: 6
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 4096MB
+      max-request-size: 4097MB
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:deer}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+deer:
+  media-root: ${DEER_MEDIA_ROOT:/var/lib/deer-business}
+  internal-token: ${INTERNAL_API_TOKEN}
+  lease-seconds: ${TASK_LEASE_SECONDS:120}
+  retry-delay-ms: ${RETRY_DELAY_MS:10000}

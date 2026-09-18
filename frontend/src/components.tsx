@@ -9,7 +9,7 @@ import { mediaUrl } from './api';
 
 echarts.use([LineChart, PieChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
-const states: Record<string, string> = { queued: '排队中', running: '检测中', processing: '检测中', completed: '已完成', failed: '失败' };
+const states: Record<string, string> = { queued: '排队中', running: '检测中', processing: '检测中', reviewing: '模型复核中', completed: '已完成', failed: '失败' };
 export function Badge({ value }: { value?: string }) {
   const tone = ['异常', '疑似异常', 'failed', '复核失败'].includes(value || '') ? 'danger'
     : ['正常', 'completed'].includes(value || '') ? 'success' : 'pending';
