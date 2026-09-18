@@ -1,0 +1,11 @@
+[project]
+name = "deer-behavior-clean"
+version = "1.0.0"
+description = "Clean deer abnormal behavior detection system"
+requires-python = ">=3.10,<3.12"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
