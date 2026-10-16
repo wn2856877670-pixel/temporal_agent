@@ -21,11 +21,9 @@ CREATE DATABASE IF NOT EXISTS deer_business CHARACTER SET utf8mb4;
 CREATE USER IF NOT EXISTS 'deer'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';
 GRANT ALL ON deer_business.* TO 'deer'@'localhost';
 SQL
-# A dedicated Redis instance avoids modifying an existing Redis configuration.
-if ! redis-cli -p 6380 ping >/dev/null 2>&1; then
-  redis-server --port 6380 --bind 127.0.0.1 --requirepass "$REDIS_PASSWORD" --appendonly yes --dir "$DEER_MEDIA_ROOT" --daemonize yes --pidfile "$PWD/logs/redis_business.pid"
-fi
-if ! grep -q '^REDIS_PORT=' .env; then printf 'REDIS_PORT=6380\n' >> .env; fi
+source scripts/business_redis.sh
+ensure_business_redis
+if ! grep -q '^REDIS_PORT=' .env; then printf 'REDIS_PORT=%s\n' "$REDIS_PORT" >> .env; fi
 export RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS='+S 2:2'
 export RABBITMQ_CTL_ERL_ARGS='+S 1:1'
 if ! rabbitmq-diagnostics -q ping >/dev/null 2>&1; then rabbitmq-server -detached; fi
