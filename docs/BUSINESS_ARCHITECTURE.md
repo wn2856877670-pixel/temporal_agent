@@ -115,6 +115,27 @@ Windows 本地只看前端时，通过 VS Code 转发云端 6020，再运行 Vit
 
 AutoDL 无 Docker daemon 时，在全新基础服务环境运行 `bash scripts/init_business_native.sh`（需预装 mysql-server、redis-server、rabbitmq-server；脚本自动生成未入库随机密码）。Redis 使用独立 6380。RabbitMQ 原生安装可用 `deploy/rabbitmq-business.conf` 绑定回环地址并提高长推理 ACK 超时，配置变更需重启新 RabbitMQ 服务。
 
+### Redis 持久化与媒体目录隔离
+
+原生 Redis 默认使用 `REDIS_DATA_DIR=/var/lib/deer-business-redis`，目录权限为 700；媒体仍为 `DEER_MEDIA_ROOT=/var/lib/deer-business`。两者不能相同、互相嵌套或通过符号链接指向同一目录。Docker Compose 已使用独立 `redis_data:/data` 卷，无须搬动该卷。
+
+Nginx 仅公开 `/media/business/results/` 下的 MP4/WebM 文件，保留已有完整视频和候选片段 URL、Range、下载功能。原视频 uploads、JSON、Redis RDB/AOF、目录索引和符号链接不再由该入口提供。这里限制的是 Nginx；Spring 的 6020 仍应只监听回环地址，不作为公共媒体入口。
+
+全新原生环境继续运行原初始化命令即可；已有 `.env` 可以补充上述 REDIS_DATA_DIR，原生端口默认 6380，显式 REDIS_PORT 会被尊重。`scripts/business_redis.sh` 仅检查/启动 Redis，不停止实例、不搬迁或删除文件：运行目录不匹配、认证失败或发现媒体目录遗留持久化数据时会报错退出，避免误启动空库。
+
+旧原生部署按以下顺序处理，先保护 HTTP 入口，再迁移；不要直接删除旧 AOF/RDB，也不要仅对运行中的 AOF 做普通复制：
+
+1. 发布新 Nginx 配置，执行 `nginx -t -c "$PWD/deploy/nginx_business.conf"`，成功后用同一配置 reload。确认原结果视频可播放，`/media/business/dump.rdb`、`/media/business/appendonlydir/appendonly.aof.manifest`、`/media/business/uploads/...`、事件 JSON 均返回 404。Nginx 启动账户需要能读取原有非链接视频文件。
+2. 安排维护窗口，暂停业务后端和 Worker；使用当前密码通过 REDISCLI_AUTH 连接实际 Redis 端口。记录 `CONFIG GET dir`、`CONFIG GET dbfilename`、`CONFIG GET appendfilename`、`CONFIG GET appenddirname`（Redis 7）、`INFO persistence`、`INFO keyspace` 和 `DBSIZE`。确认不是 Docker 或其他应用的实例。旧脚本使用默认 `dump.rdb`、`appendonly.aof` 或 Redis 7 的 `appendonlydir`；自定义名称必须按实测记录处理。
+3. 对该实例执行 `SHUTDOWN SAVE`，确认进程退出且端口不再监听。若持久化报错、存在重写或无法确认实例身份，停止操作，保留现场。不要在 Redis 仍写入时复制 AOF。
+4. 创建一个全新的、位于媒体目录之外的 Redis 目录，先确认目标目录为空。只复制实测的持久化文件/目录，使用 `cp -a --no-clobber` 并核对源/目标文件清单和校验值；不复制视频目录，不覆盖已有目标文件，不修改旧目录。Redis 7 必须复制整个 appendonlydir，包含 manifest、base 和 incr 文件；不能只复制一个 AOF 文件。保留一份只读备份记录。
+5. 用记录下来的端口、密码、appendonly/dbfilename/appendfilename/appenddirname 配置，从新目录启动该 Redis。默认实例可沿用旧启动命令，仅将 `--dir` 换成新目录；不要把自定义持久化参数丢掉。比较 CONFIG GET dir、INFO persistence、各数据库 key 数量/抽样值及 TTL，确认新实例正常后恢复后端和 Worker。原文件继续保留，新 `.env` 的 REDIS_DATA_DIR 必须与实际新目录一致。
+6. 新实例运行且目录匹配时，初始化脚本可以重复执行，不会再次启动 Redis。以后若新实例已停且媒体目录仍有旧持久化文件，脚本仍会保守拒绝自动启动；管理员应按第 5 步从核验过的新目录显式启动，或将旧备份另行复制保管后再安排单独清理。本文不授权删除旧数据。
+
+可在已部署的 6010 入口用 `curl -I` 验证拒绝路径，用 `curl -H 'Range: bytes=0-1023'` 请求一个真实结果视频，预期 206 和 Content-Range；完整视频及候选片段都应验证。不存在的结果视频应为 404，不能返回前端 index.html。此次目录隔离不修改 MySQL、任务状态机或模型逻辑。
+
+专项验证命令为 `python scripts/test_media_isolation.py`（仅 Python 标准库）。Redis 用例使用临时目录及模拟命令，不连接实际 Redis；发现 Linux Nginx 后会对临时配置执行 `nginx -t` 并在随机回环端口检查视频 GET/HEAD/Range、敏感文件拦截和符号链接。测试不会加载生产配置或重启生产实例。Windows 可通过 BASH_BINARY 指向 Git Bash；无 Nginx/符号链接权限时相应用例会明确跳过，Linux 目录权限及真实 Redis 重启/迁移仍须在维护窗口验收。
+
 静态部署：
 
 ```bash
